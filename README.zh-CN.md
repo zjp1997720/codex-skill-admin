@@ -6,7 +6,7 @@ Codex Skill Admin 是一个 Codex 专用的 agent skill，用来通过 Codex 本
 
 适合在你想节省 prompt token 时使用：它会帮你找出近期没有使用证据的 skill，并把它们关闭，而不是卸载。
 
-## 安装
+## Agent 安装
 
 ```bash
 npx skills add zjp1997720/codex-skill-admin -g -a codex --skill codex-skill-admin -y
@@ -18,13 +18,12 @@ npx skills add zjp1997720/codex-skill-admin -g -a codex --skill codex-skill-admi
 npx skills add zjp1997720/codex-skill-admin --list
 ```
 
-这个仓库使用 `npx skills` 支持的 Agent Skills 结构：可安装的 skill 位于 `skills/codex-skill-admin/SKILL.md`，辅助脚本和协议参考文件放在同一个 skill 目录里。
+安装后，直接让 Codex 使用 `$codex-skill-admin` 处理 skill 清理任务。Agent 需要执行的流程写在 `skills/codex-skill-admin/SKILL.md`，人不需要手动跑里面的辅助脚本。
 
 ## 环境要求
 
 - 支持 `codex app-server` 的 Codex CLI
 - Python 3.10+
-- 本地 skill 安装目录。`npx skills` 通常会把 Codex 兼容 skill 安装到 `$HOME/.agents/skills`；Codex 原生安装通常使用 `${CODEX_HOME:-$HOME/.codex}/skills`。
 
 ## 功能
 
@@ -52,60 +51,16 @@ Codex 会把已启用 skill 的元信息放进 prompt，让模型判断什么时
 - apply 模式的备份写入 `${CODEX_HOME:-$HOME/.codex}/backup/`。
 - 备份文件包含本机 skill 路径和使用证据，按私有本机诊断数据处理。
 
-## 使用
+## 示例请求
 
-```bash
-SKILL_DIR="${CODEX_SKILL_ADMIN_DIR:-$HOME/.agents/skills/codex-skill-admin}"
-if [ ! -d "$SKILL_DIR" ]; then
-  SKILL_DIR="${CODEX_HOME:-$HOME/.codex}/skills/codex-skill-admin"
-fi
-
-python3 "$SKILL_DIR/scripts/codex_skill_admin.py" list --cwd "$PWD"
-python3 "$SKILL_DIR/scripts/codex_skill_admin.py" audit-unused --cwd "$PWD" --days 30
-python3 "$SKILL_DIR/scripts/codex_skill_admin.py" disable-unused --cwd "$PWD" --days 30
-python3 "$SKILL_DIR/scripts/codex_skill_admin.py" disable-unused --cwd "$PWD" --days 30 --apply
-python3 "$SKILL_DIR/scripts/codex_skill_admin.py" verify --cwd "$PWD"
+```text
+Use $codex-skill-admin to audit skills I have not used in the last 30 days.
+Use $codex-skill-admin to disable skills used at most 2 times in the last 10 days.
+Use $codex-skill-admin to restore the last disable run.
+Use $codex-skill-admin to verify whether the cleanup reduced prompt-visible skills.
 ```
 
-关闭最近 10 天使用不超过 2 次的 skills：
-
-```bash
-python3 "$SKILL_DIR/scripts/codex_skill_admin.py" disable-unused --cwd "$PWD" --days 10 --max-uses 2
-python3 "$SKILL_DIR/scripts/codex_skill_admin.py" disable-unused --cwd "$PWD" --days 10 --max-uses 2 --apply
-```
-
-`usageCount` 按不同的本地 session/source 文件计数，同一个 session 里重复读取不会被算成多次使用。
-
-恢复上一次操作：
-
-```bash
-python3 "$SKILL_DIR/scripts/codex_skill_admin.py" restore --backup-dir "${CODEX_HOME:-$HOME/.codex}/backup/skill-disable-unused-YYYYMMDD-HHMMSS"
-```
-
-关闭或启用某一个明确的 skill：
-
-```bash
-python3 "$SKILL_DIR/scripts/codex_skill_admin.py" set --name codex-skill-admin --no-enabled
-python3 "$SKILL_DIR/scripts/codex_skill_admin.py" set --name codex-skill-admin --no-enabled --apply
-```
-
-## 验证
-
-应用修改后运行：
-
-```bash
-python3 "$SKILL_DIR/scripts/codex_skill_admin.py" verify --cwd "$PWD"
-python3 "$SKILL_DIR/scripts/codex_skill_admin.py" list --cwd "$PWD" --force-reload --disabled
-python3 "$SKILL_DIR/scripts/codex_skill_admin.py" prompt-count
-```
-
-成功标准：
-
-- `--disabled` 输出里能看到目标 skills。
-- `enabledCount` 相比操作前下降。
-- 如果被关闭的 skills 原本会进入 prompt，`availableSkillCount` 相比操作前下降。
-
-Codex 桌面 UI 顶部的「技能」数量统计的是已发现的 skill 总数，不是启用数量。关闭 skill 后，这个 UI 数字可以保持不变；真正影响 token 的指标是 `enabledCount` 和 `availableSkillCount`。
+桌面 UI 顶部的「技能」数字可能不变，因为它统计的是已安装/已发现的 skill，也包括 disabled 的 skill。真正有用的成功指标是启用数下降、prompt 里实际可见的 skill 数下降。
 
 ## 仓库结构
 

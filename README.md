@@ -8,7 +8,7 @@ Codex Skill Admin is a Codex-only agent skill for auditing, disabling, restoring
 
 Use it when you want to reduce prompt token load by disabling unused skills without uninstalling them.
 
-## Install
+## Agent Install
 
 ```bash
 npx skills add zjp1997720/codex-skill-admin -g -a codex --skill codex-skill-admin -y
@@ -20,13 +20,12 @@ List the skill before installing:
 npx skills add zjp1997720/codex-skill-admin --list
 ```
 
-The repository uses the Agent Skills layout supported by `npx skills`: the installable skill lives at `skills/codex-skill-admin/SKILL.md`, with helper scripts and references beside it.
+After installing, ask Codex to use `$codex-skill-admin` for skill cleanup tasks. The agent-facing workflow lives in `skills/codex-skill-admin/SKILL.md`; humans do not need to run the helper script directly.
 
 ## Requirements
 
 - Codex CLI with `codex app-server`
 - Python 3.10+
-- A local skill installation directory. `npx skills` commonly installs Codex-compatible skills under `$HOME/.agents/skills`; direct Codex installs commonly use `${CODEX_HOME:-$HOME/.codex}/skills`.
 
 ## What It Does
 
@@ -54,56 +53,16 @@ Disabling a skill does not delete it. The script calls Codex's local `skills/con
 - Apply-mode backups are written under `${CODEX_HOME:-$HOME/.codex}/backup/`.
 - Backup files contain local skill paths and usage evidence. Treat them as private machine-local diagnostics.
 
-## Usage
+## Example Requests
 
-```bash
-SKILL_DIR="${CODEX_SKILL_ADMIN_DIR:-$HOME/.agents/skills/codex-skill-admin}"
-if [ ! -d "$SKILL_DIR" ]; then
-  SKILL_DIR="${CODEX_HOME:-$HOME/.codex}/skills/codex-skill-admin"
-fi
-
-python3 "$SKILL_DIR/scripts/codex_skill_admin.py" list --cwd "$PWD"
-python3 "$SKILL_DIR/scripts/codex_skill_admin.py" audit-unused --cwd "$PWD" --days 30
-python3 "$SKILL_DIR/scripts/codex_skill_admin.py" disable-unused --cwd "$PWD" --days 30
-python3 "$SKILL_DIR/scripts/codex_skill_admin.py" disable-unused --cwd "$PWD" --days 30 --apply
-python3 "$SKILL_DIR/scripts/codex_skill_admin.py" verify --cwd "$PWD"
+```text
+Use $codex-skill-admin to audit skills I have not used in the last 30 days.
+Use $codex-skill-admin to disable skills used at most 2 times in the last 10 days.
+Use $codex-skill-admin to restore the last disable run.
+Use $codex-skill-admin to verify whether the cleanup reduced prompt-visible skills.
 ```
 
-Disable skills used at most 2 times in the last 10 days:
-
-```bash
-python3 "$SKILL_DIR/scripts/codex_skill_admin.py" disable-unused --cwd "$PWD" --days 10 --max-uses 2
-python3 "$SKILL_DIR/scripts/codex_skill_admin.py" disable-unused --cwd "$PWD" --days 10 --max-uses 2 --apply
-```
-
-`usageCount` is based on distinct local session/source files, not repeated reads inside one session.
-
-Restore a previous run:
-
-```bash
-python3 "$SKILL_DIR/scripts/codex_skill_admin.py" restore --backup-dir "${CODEX_HOME:-$HOME/.codex}/backup/skill-disable-unused-YYYYMMDD-HHMMSS"
-```
-
-Toggle one explicit skill:
-
-```bash
-python3 "$SKILL_DIR/scripts/codex_skill_admin.py" set --name codex-skill-admin --no-enabled
-python3 "$SKILL_DIR/scripts/codex_skill_admin.py" set --name codex-skill-admin --no-enabled --apply
-```
-
-## Verification
-
-After applying changes:
-
-```bash
-python3 "$SKILL_DIR/scripts/codex_skill_admin.py" verify --cwd "$PWD"
-python3 "$SKILL_DIR/scripts/codex_skill_admin.py" list --cwd "$PWD" --force-reload --disabled
-python3 "$SKILL_DIR/scripts/codex_skill_admin.py" prompt-count
-```
-
-The disabled list should include the target skills. `enabledCount` should drop, and `availableSkillCount` should drop when disabled skills were previously visible in the prompt.
-
-The Codex desktop Skills tab count is a total discovered skill count. It may stay unchanged after disabling skills because disabled skills are still installed and visible in the management UI.
+The desktop Skills tab count may stay unchanged because it counts installed/discovered skills, including disabled ones. The useful success signals are fewer enabled skills and fewer prompt-visible skills.
 
 ## Repository Layout
 
