@@ -335,9 +335,15 @@ def map_used_to_current(
     return used_current_paths, evidence_by_current_path
 
 
+def usage_count(evidence: list[dict[str, str]]) -> int:
+    sources = {item.get("source", "") for item in evidence if item.get("source")}
+    return len(sources) if sources else len(evidence)
+
+
 def audit_unused(
     skills: list[dict[str, Any]],
     days: int,
+    max_uses: int,
     include_system: bool,
     keep_names: list[str],
 ) -> dict[str, Any]:
@@ -348,13 +354,16 @@ def audit_unused(
     candidates = []
     used_enabled = []
     for item in enabled:
-        if item["path"] in used_current:
+        item_evidence = evidence.get(item["path"], [])
+        item_usage_count = usage_count(item_evidence)
+        if item["path"] in used_current and item_usage_count > max_uses:
             used_enabled.append(
                 {
                     "name": item["name"],
                     "scope": item["scope"],
                     "path": item["path"],
-                    "evidenceCount": len(evidence.get(item["path"], [])),
+                    "usageCount": item_usage_count,
+                    "evidenceCount": len(item_evidence),
                 }
             )
             continue
@@ -362,10 +371,19 @@ def audit_unused(
             continue
         if item["name"] in keep_set:
             continue
-        candidates.append({"name": item["name"], "scope": item["scope"], "path": item["path"]})
+        candidates.append(
+            {
+                "name": item["name"],
+                "scope": item["scope"],
+                "path": item["path"],
+                "usageCount": item_usage_count,
+                "evidenceCount": len(item_evidence),
+            }
+        )
 
     return {
         "days": days,
+        "maxUses": max_uses,
         "summary": summarize(skills),
         "usedEnabledCount": len(used_enabled),
         "disableCandidateCount": len(candidates),
@@ -403,7 +421,7 @@ def cmd_list(args: argparse.Namespace, client: WebSocketJsonRpc) -> int:
 @with_client
 def cmd_audit_unused(args: argparse.Namespace, client: WebSocketJsonRpc) -> int:
     skills = skill_list(client, args.cwd, True)
-    audit = audit_unused(skills, args.days, args.include_system, args.keep_name)
+    audit = audit_unused(skills, args.days, args.max_uses, args.include_system, args.keep_name)
     json_print(audit)
     return 0
 
@@ -411,7 +429,7 @@ def cmd_audit_unused(args: argparse.Namespace, client: WebSocketJsonRpc) -> int:
 @with_client
 def cmd_disable_unused(args: argparse.Namespace, client: WebSocketJsonRpc) -> int:
     skills = skill_list(client, args.cwd, True)
-    audit = audit_unused(skills, args.days, args.include_system, args.keep_name)
+    audit = audit_unused(skills, args.days, args.max_uses, args.include_system, args.keep_name)
     candidates = audit["disableCandidates"]
     ui_count_note = (
         "The Codex desktop Skills tab count is the total discovered skill count, "
@@ -563,6 +581,7 @@ def build_parser() -> argparse.ArgumentParser:
     audit_p = sub.add_parser("audit-unused")
     audit_p.add_argument("--cwd", default=os.getcwd())
     audit_p.add_argument("--days", type=int, default=30)
+    audit_p.add_argument("--max-uses", type=int, default=0)
     audit_p.add_argument("--include-system", action="store_true")
     audit_p.add_argument("--keep-system", action="store_true", help=argparse.SUPPRESS)
     audit_p.add_argument("--keep-name", action="append", default=[])
@@ -571,6 +590,7 @@ def build_parser() -> argparse.ArgumentParser:
     disable_p = sub.add_parser("disable-unused")
     disable_p.add_argument("--cwd", default=os.getcwd())
     disable_p.add_argument("--days", type=int, default=30)
+    disable_p.add_argument("--max-uses", type=int, default=0)
     disable_p.add_argument("--apply", action="store_true")
     disable_p.add_argument("--backup-dir")
     disable_p.add_argument("--include-system", action="store_true")
@@ -605,6 +625,10 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if getattr(args, "command", "") == "set" and not args.path and not args.name:
         raise SystemExit("set requires at least one --path or --name")
+    if hasattr(args, "days") and args.days < 1:
+        raise SystemExit("--days must be at least 1")
+    if hasattr(args, "max_uses") and args.max_uses < 0:
+        raise SystemExit("--max-uses must be at least 0")
     return int(args.func(args))
 
 

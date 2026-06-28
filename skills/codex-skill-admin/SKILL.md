@@ -20,6 +20,7 @@ python3 "$SKILL_DIR/scripts/codex_skill_admin.py" list --cwd "$PWD"
 python3 "$SKILL_DIR/scripts/codex_skill_admin.py" audit-unused --cwd "$PWD" --days 30
 python3 "$SKILL_DIR/scripts/codex_skill_admin.py" disable-unused --cwd "$PWD" --days 30
 python3 "$SKILL_DIR/scripts/codex_skill_admin.py" disable-unused --cwd "$PWD" --days 30 --apply
+python3 "$SKILL_DIR/scripts/codex_skill_admin.py" disable-unused --cwd "$PWD" --days 10 --max-uses 2
 python3 "$SKILL_DIR/scripts/codex_skill_admin.py" verify --cwd "$PWD"
 ```
 
@@ -38,10 +39,11 @@ ${CODEX_HOME:-$HOME/.codex}/backup/skill-disable-unused-YYYYMMDD-HHMMSS/
 
 1. Run `list` to get the current total, enabled, and disabled counts.
 2. Run `audit-unused --days 30` to inspect high-confidence recent usage.
-3. Run `disable-unused --days 30` without `--apply` and inspect the dry-run output.
-4. If the user asked to close unused skills, run `disable-unused --apply`.
-5. Verify with `verify`, or with `list --force-reload` plus `prompt-count`.
-6. Report counts, backup path, and any limits of the usage evidence.
+3. Optionally add `--max-uses N` to include low-frequency skills. Example: `--days 10 --max-uses 2` targets enabled skills used in at most 2 distinct recent session/source files.
+4. Run `disable-unused --days 30` without `--apply` and inspect the dry-run output.
+5. If the user asked to close unused or low-frequency skills, run `disable-unused --apply`.
+6. Verify with `verify`, or with `list --force-reload` plus `prompt-count`.
+7. Report counts, backup path, threshold parameters, and any limits of the usage evidence.
 
 System skills are preserved by default. Use `--include-system` only when the user explicitly asks to consider system skills too.
 
@@ -53,6 +55,7 @@ The audit is intentionally conservative:
 
 - Count actual `SKILL.md` reads from recent Codex session tool calls.
 - Count OMO dynamic session fingerprints that include `SKILL.md`.
+- Count usage as distinct evidence source/session files, so repeated reads inside one session do not inflate `usageCount`.
 - Ignore always-loaded "Available skills" lists, because they are not usage.
 
 This is local evidence, not the product Profile page's server-side analytics.

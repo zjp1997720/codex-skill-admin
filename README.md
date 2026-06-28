@@ -33,9 +33,18 @@ The repository uses the Agent Skills layout supported by `npx skills`: the insta
 - Lists enabled and disabled Codex skills.
 - Audits recently used skills from local Codex session evidence.
 - Disables unused enabled skills with a dry-run first.
+- Supports low-frequency cleanup, such as disabling skills used at most 2 times in the last 10 days.
 - Restores a previous disable run from backup files.
 - Counts skills visible in the next Codex prompt.
 - Explains the difference between the desktop UI total count and effective enabled/prompt-visible counts.
+
+## How It Works
+
+Codex loads skill metadata into the prompt so it can decide which skill to use. When many skills stay enabled, the prompt gets heavier even if most of them are not useful for the current task.
+
+This tool looks at local Codex session files and searches for real `SKILL.md` reads. If a skill was read recently, it is treated as used. If it was not read, or if it was read no more than your `--max-uses` threshold, it becomes a disable candidate.
+
+Disabling a skill does not delete it. The script calls Codex's local `skills/config/write` API to mark the skill as disabled, writes a local backup, and lets you restore it later. The desktop UI may still count the skill because the file still exists; the important numbers are enabled skills and prompt-visible skills.
 
 ## Safety Defaults
 
@@ -59,6 +68,15 @@ python3 "$SKILL_DIR/scripts/codex_skill_admin.py" disable-unused --cwd "$PWD" --
 python3 "$SKILL_DIR/scripts/codex_skill_admin.py" disable-unused --cwd "$PWD" --days 30 --apply
 python3 "$SKILL_DIR/scripts/codex_skill_admin.py" verify --cwd "$PWD"
 ```
+
+Disable skills used at most 2 times in the last 10 days:
+
+```bash
+python3 "$SKILL_DIR/scripts/codex_skill_admin.py" disable-unused --cwd "$PWD" --days 10 --max-uses 2
+python3 "$SKILL_DIR/scripts/codex_skill_admin.py" disable-unused --cwd "$PWD" --days 10 --max-uses 2 --apply
+```
+
+`usageCount` is based on distinct local session/source files, not repeated reads inside one session.
 
 Restore a previous run:
 

@@ -31,9 +31,18 @@ npx skills add zjp1997720/codex-skill-admin --list
 - 列出当前启用和关闭的 Codex skills。
 - 根据本地 Codex session 证据审计近期使用过的 skills。
 - 先 dry-run，再关闭近期未使用的已启用 skills。
+- 支持低频清理，例如关闭最近 10 天使用不超过 2 次的 skills。
 - 从备份恢复上一次关闭操作。
 - 统计下一次 Codex prompt 中实际可见的 skill 数量。
 - 区分桌面 UI 总数和真正影响 token 的启用数 / prompt 可见数。
+
+## 原理
+
+Codex 会把已启用 skill 的元信息放进 prompt，让模型判断什么时候该用哪个 skill。启用的 skill 越多，prompt 越重；即使很多 skill 当前根本用不上，它们也会占用上下文预算。
+
+这个工具不靠猜。它会读取本机 Codex session 记录，查找哪些 `SKILL.md` 在最近一段时间被真正读过。读过，就算使用过；没读过，或者使用次数不超过你设置的 `--max-uses` 阈值，就进入关闭候选。
+
+关闭不是删除。脚本调用 Codex 本地 `skills/config/write` API，把 skill 标记为 disabled，同时写一份本地备份，后面可以恢复。桌面 UI 顶部的「技能」数字可能不变，因为文件还在；真正影响 token 的是启用数和 prompt 里实际可见的 skill 数。
 
 ## 安全默认值
 
@@ -57,6 +66,15 @@ python3 "$SKILL_DIR/scripts/codex_skill_admin.py" disable-unused --cwd "$PWD" --
 python3 "$SKILL_DIR/scripts/codex_skill_admin.py" disable-unused --cwd "$PWD" --days 30 --apply
 python3 "$SKILL_DIR/scripts/codex_skill_admin.py" verify --cwd "$PWD"
 ```
+
+关闭最近 10 天使用不超过 2 次的 skills：
+
+```bash
+python3 "$SKILL_DIR/scripts/codex_skill_admin.py" disable-unused --cwd "$PWD" --days 10 --max-uses 2
+python3 "$SKILL_DIR/scripts/codex_skill_admin.py" disable-unused --cwd "$PWD" --days 10 --max-uses 2 --apply
+```
+
+`usageCount` 按不同的本地 session/source 文件计数，同一个 session 里重复读取不会被算成多次使用。
 
 恢复上一次操作：
 

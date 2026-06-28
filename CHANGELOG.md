@@ -4,6 +4,7 @@
 
 - Added `verify` command for effective skill visibility checks.
 - Documented that the Codex desktop Skills tab count is total discovered skills, not enabled skills.
+- Added `--max-uses` for low-frequency cleanup such as `--days 10 --max-uses 2`.
 
 ## 0.1.0 - 2026-06-28
 
