@@ -35,6 +35,7 @@ The repository uses the Agent Skills layout supported by `npx skills`: the insta
 - Disables unused enabled skills with a dry-run first.
 - Restores a previous disable run from backup files.
 - Counts skills visible in the next Codex prompt.
+- Explains the difference between the desktop UI total count and effective enabled/prompt-visible counts.
 
 ## Safety Defaults
 
@@ -56,6 +57,7 @@ python3 "$SKILL_DIR/scripts/codex_skill_admin.py" list --cwd "$PWD"
 python3 "$SKILL_DIR/scripts/codex_skill_admin.py" audit-unused --cwd "$PWD" --days 30
 python3 "$SKILL_DIR/scripts/codex_skill_admin.py" disable-unused --cwd "$PWD" --days 30
 python3 "$SKILL_DIR/scripts/codex_skill_admin.py" disable-unused --cwd "$PWD" --days 30 --apply
+python3 "$SKILL_DIR/scripts/codex_skill_admin.py" verify --cwd "$PWD"
 ```
 
 Restore a previous run:
@@ -76,17 +78,21 @@ python3 "$SKILL_DIR/scripts/codex_skill_admin.py" set --name codex-skill-admin -
 After applying changes:
 
 ```bash
+python3 "$SKILL_DIR/scripts/codex_skill_admin.py" verify --cwd "$PWD"
 python3 "$SKILL_DIR/scripts/codex_skill_admin.py" list --cwd "$PWD" --force-reload --disabled
 python3 "$SKILL_DIR/scripts/codex_skill_admin.py" prompt-count
 ```
 
-The disabled list should include the target skills, and `availableSkillCount` should drop versus the pre-run count.
+The disabled list should include the target skills. `enabledCount` should drop, and `availableSkillCount` should drop when disabled skills were previously visible in the prompt.
+
+The Codex desktop Skills tab count is a total discovered skill count. It may stay unchanged after disabling skills because disabled skills are still installed and visible in the management UI.
 
 ## Repository Layout
 
 ```text
 .
 ├── README.md
+├── README.zh-CN.md
 ├── LICENSE
 ├── skills.sh.json
 └── skills/

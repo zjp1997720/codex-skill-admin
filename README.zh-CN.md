@@ -33,6 +33,7 @@ npx skills add zjp1997720/codex-skill-admin --list
 - 先 dry-run，再关闭近期未使用的已启用 skills。
 - 从备份恢复上一次关闭操作。
 - 统计下一次 Codex prompt 中实际可见的 skill 数量。
+- 区分桌面 UI 总数和真正影响 token 的启用数 / prompt 可见数。
 
 ## 安全默认值
 
@@ -54,6 +55,7 @@ python3 "$SKILL_DIR/scripts/codex_skill_admin.py" list --cwd "$PWD"
 python3 "$SKILL_DIR/scripts/codex_skill_admin.py" audit-unused --cwd "$PWD" --days 30
 python3 "$SKILL_DIR/scripts/codex_skill_admin.py" disable-unused --cwd "$PWD" --days 30
 python3 "$SKILL_DIR/scripts/codex_skill_admin.py" disable-unused --cwd "$PWD" --days 30 --apply
+python3 "$SKILL_DIR/scripts/codex_skill_admin.py" verify --cwd "$PWD"
 ```
 
 恢复上一次操作：
@@ -74,6 +76,7 @@ python3 "$SKILL_DIR/scripts/codex_skill_admin.py" set --name codex-skill-admin -
 应用修改后运行：
 
 ```bash
+python3 "$SKILL_DIR/scripts/codex_skill_admin.py" verify --cwd "$PWD"
 python3 "$SKILL_DIR/scripts/codex_skill_admin.py" list --cwd "$PWD" --force-reload --disabled
 python3 "$SKILL_DIR/scripts/codex_skill_admin.py" prompt-count
 ```
@@ -81,7 +84,10 @@ python3 "$SKILL_DIR/scripts/codex_skill_admin.py" prompt-count
 成功标准：
 
 - `--disabled` 输出里能看到目标 skills。
-- `availableSkillCount` 相比操作前下降。
+- `enabledCount` 相比操作前下降。
+- 如果被关闭的 skills 原本会进入 prompt，`availableSkillCount` 相比操作前下降。
+
+Codex 桌面 UI 顶部的「技能」数量统计的是已发现的 skill 总数，不是启用数量。关闭 skill 后，这个 UI 数字可以保持不变；真正影响 token 的指标是 `enabledCount` 和 `availableSkillCount`。
 
 ## 仓库结构
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Added `verify` command for effective skill visibility checks.
+- Documented that the Codex desktop Skills tab count is total discovered skills, not enabled skills.
+
 ## 0.1.0 - 2026-06-28
 
 - Initial open-source release.

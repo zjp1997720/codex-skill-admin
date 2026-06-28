@@ -413,8 +413,12 @@ def cmd_disable_unused(args: argparse.Namespace, client: WebSocketJsonRpc) -> in
     skills = skill_list(client, args.cwd, True)
     audit = audit_unused(skills, args.days, args.include_system, args.keep_name)
     candidates = audit["disableCandidates"]
+    ui_count_note = (
+        "The Codex desktop Skills tab count is the total discovered skill count, "
+        "not the enabled count. It is expected to stay unchanged after disabling skills."
+    )
     if not args.apply:
-        json_print({"dryRun": True, "wouldDisable": len(candidates), "audit": audit})
+        json_print({"dryRun": True, "wouldDisable": len(candidates), "uiCountNote": ui_count_note, "audit": audit})
         return 0
 
     target_dir = pathlib.Path(args.backup_dir) if args.backup_dir else backup_dir("skill-disable-unused")
@@ -432,7 +436,10 @@ def cmd_disable_unused(args: argparse.Namespace, client: WebSocketJsonRpc) -> in
         "backupDir": str(target_dir),
         "attempted": len(results),
         "failed": [item for item in results if not item["ok"]],
+        "beforeSummary": summarize(skills),
         "afterSummary": summarize(after),
+        "uiCountNote": ui_count_note,
+        "nextVerificationCommand": "python3 scripts/codex_skill_admin.py verify --cwd \"$PWD\"",
         "results": results,
     }
     (target_dir / "disable-result.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -476,17 +483,16 @@ def cmd_set(args: argparse.Namespace, client: WebSocketJsonRpc) -> int:
     return 1 if any(not item["ok"] for item in results) else 0
 
 
-def cmd_prompt_count(args: argparse.Namespace) -> int:
+def prompt_available_skill_count(prompt: str) -> int:
     proc = subprocess.run(
-        ["codex", "debug", "prompt-input", args.prompt],
+        ["codex", "debug", "prompt-input", prompt],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
         check=False,
     )
     if proc.returncode != 0:
-        sys.stderr.write(proc.stderr)
-        return proc.returncode
+        raise RuntimeError(proc.stderr.strip() or "codex debug prompt-input failed")
     strings = re.findall(r'"([^"\\]*(?:\\.[^"\\]*)*)"', proc.stdout)
     text = "\n".join(bytes(item, "utf-8").decode("unicode_escape") for item in strings)
     count = 0
@@ -499,7 +505,45 @@ def cmd_prompt_count(args: argparse.Namespace) -> int:
             active = False
         if active and line.startswith("- "):
             count += 1
+    return count
+
+
+def cmd_prompt_count(args: argparse.Namespace) -> int:
+    try:
+        count = prompt_available_skill_count(args.prompt)
+    except RuntimeError as exc:
+        sys.stderr.write(f"{exc}\n")
+        return 1
     json_print({"availableSkillCount": count})
+    return 0
+
+
+@with_client
+def cmd_verify(args: argparse.Namespace, client: WebSocketJsonRpc) -> int:
+    skills = skill_list(client, args.cwd, True)
+    summary = summarize(skills)
+    report: dict[str, Any] = {
+        "summary": summary,
+        "ui": {
+            "skillTabCount": summary["skillCount"],
+            "countMeaning": "Total discovered skills. This matches the Codex desktop Skills tab count and does not drop when skills are disabled.",
+        },
+        "effectiveVisibility": {
+            "enabledCount": summary["enabledCount"],
+            "disabledCount": summary["disabledCount"],
+        },
+        "successCriteria": [
+            "Disabled target skills appear in list --disabled.",
+            "enabledCount drops after disabling skills.",
+            "availableSkillCount drops after disabling skills that were previously injected into the prompt.",
+            "The desktop UI Skills tab count may remain unchanged because it counts total discovered skills.",
+        ],
+    }
+    try:
+        report["effectiveVisibility"]["availableSkillCount"] = prompt_available_skill_count(args.prompt)
+    except RuntimeError as exc:
+        report["effectiveVisibility"]["availableSkillCountError"] = str(exc)
+    json_print(report)
     return 0
 
 
@@ -548,6 +592,11 @@ def build_parser() -> argparse.ArgumentParser:
     prompt_p = sub.add_parser("prompt-count")
     prompt_p.add_argument("--prompt", default="skill visibility check")
     prompt_p.set_defaults(func=cmd_prompt_count)
+
+    verify_p = sub.add_parser("verify")
+    verify_p.add_argument("--cwd", default=os.getcwd())
+    verify_p.add_argument("--prompt", default="skill visibility check")
+    verify_p.set_defaults(func=cmd_verify)
 
     return parser
 

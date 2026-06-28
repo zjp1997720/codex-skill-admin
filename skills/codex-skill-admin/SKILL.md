@@ -20,6 +20,7 @@ python3 "$SKILL_DIR/scripts/codex_skill_admin.py" list --cwd "$PWD"
 python3 "$SKILL_DIR/scripts/codex_skill_admin.py" audit-unused --cwd "$PWD" --days 30
 python3 "$SKILL_DIR/scripts/codex_skill_admin.py" disable-unused --cwd "$PWD" --days 30
 python3 "$SKILL_DIR/scripts/codex_skill_admin.py" disable-unused --cwd "$PWD" --days 30 --apply
+python3 "$SKILL_DIR/scripts/codex_skill_admin.py" verify --cwd "$PWD"
 ```
 
 The script starts a temporary localhost `codex app-server`, calls:
@@ -39,10 +40,12 @@ ${CODEX_HOME:-$HOME/.codex}/backup/skill-disable-unused-YYYYMMDD-HHMMSS/
 2. Run `audit-unused --days 30` to inspect high-confidence recent usage.
 3. Run `disable-unused --days 30` without `--apply` and inspect the dry-run output.
 4. If the user asked to close unused skills, run `disable-unused --apply`.
-5. Verify with `list --force-reload` and `prompt-count`.
+5. Verify with `verify`, or with `list --force-reload` plus `prompt-count`.
 6. Report counts, backup path, and any limits of the usage evidence.
 
 System skills are preserved by default. Use `--include-system` only when the user explicitly asks to consider system skills too.
+
+The Codex desktop Skills tab count is a total discovered skill count. It is expected to stay unchanged after disabling skills. Treat `enabledCount` and `availableSkillCount` as the token-load success metrics.
 
 ## Usage Evidence
 
@@ -66,9 +69,11 @@ Use the platform path separator for multiple aliases.
 
 After an apply run:
 
-1. Run `list --force-reload --disabled` and confirm the target skills are disabled.
-2. Run `prompt-count` and confirm `availableSkillCount` drops versus the pre-run count.
-3. If the result is wrong, run `restore --backup-dir <backupDir>` using the backup path from the apply output.
+1. Run `verify --cwd "$PWD"`.
+2. Confirm `enabledCount` dropped and target skills appear in `list --force-reload --disabled`.
+3. Confirm `availableSkillCount` dropped versus the pre-run count when disabled skills were previously prompt-visible.
+4. Ignore the desktop UI tab count for token savings; it counts total discovered skills, including disabled ones.
+5. If the result is wrong, run `restore --backup-dir <backupDir>` using the backup path from the apply output.
 
 Backup files include local skill paths and usage evidence. Treat them as private machine-local diagnostics.
 
