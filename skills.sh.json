@@ -1,0 +1,10 @@
+{
+  "$schema": "https://skills.sh/schemas/skills.sh.schema.json",
+  "groupings": [
+    {
+      "title": "Codex Administration",
+      "description": "Skills for auditing and managing local Codex skill visibility.",
+      "skills": ["codex-skill-admin"]
+    }
+  ]
+}
