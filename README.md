@@ -2,6 +2,8 @@
 
 [![skills.sh](https://skills.sh/b/zjp1997720/codex-skill-admin)](https://skills.sh/zjp1997720/codex-skill-admin)
 
+[中文文档](README.zh-CN.md)
+
 Codex Skill Admin is a Codex-only agent skill for auditing, disabling, restoring, and verifying local Codex skills through Codex's local app-server API.
 
 Use it when you want to reduce prompt token load by disabling unused skills without uninstalling them.
