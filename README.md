@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> This repository is a generated compatibility mirror. The editable source, Issues, and contributions live in [zjp1997720/zhijian-skills](https://github.com/zjp1997720/zhijian-skills/tree/main/skills/codex-skill-admin).
+
 # Codex Skill Admin
 
 [![skills.sh](https://skills.sh/b/zjp1997720/codex-skill-admin)](https://skills.sh/zjp1997720/codex-skill-admin)

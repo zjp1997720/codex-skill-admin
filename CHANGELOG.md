@@ -1,15 +1,7 @@
-# Changelog
+# codex-skill-admin Changelog
 
-## Unreleased
+## 1.0.0 — 2026-07-16
 
-- Added `verify` command for effective skill visibility checks.
-- Documented that the Codex desktop Skills tab count is total discovered skills, not enabled skills.
-- Added `--max-uses` for low-frequency cleanup such as `--days 10 --max-uses 2`.
+- Establish the first independently versioned governance baseline.
+- Preserve official app-server Skill administration behavior.
 
-## 0.1.0 - 2026-06-28
-
-- Initial open-source release.
-- Added portable path handling.
-- Preserved system skills by default.
-- Added dry-run default for direct `set` operations.
-- Added `npx skills` compatible repository layout.

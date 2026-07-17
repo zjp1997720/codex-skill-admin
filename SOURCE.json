@@ -1,0 +1,23 @@
+{
+  "canonical_repository": "zjp1997720/zhijian-skills",
+  "export_digest": "c10bb1506247e9e5d6b5bdbd255dbbdb78ad1272da60835f88b76339aca82134",
+  "files": {
+    ".github/workflows/redirect-contributions.yml": "07df186b56b8ad5f799ea585601d1fbec345f5cb7b3626b0755a99c2fb802502",
+    "CHANGELOG.md": "6cc690b601c69003634870b838c2e30baf2d3554c074ea1abfa27ba529d3a2d7",
+    "CONTRIBUTING.md": "c2e5f5ea8a62d4958cab579d670ff4a2614768ec4edfbbd04ef347bf71bdc402",
+    "LICENSE": "4c132f6df8bf3720921492fb26412abc98bf51eec6acbe89dbf95c8b09b8d340",
+    "README.md": "e288a1c3169c4d51ef7dff22337812fa2476dbf580aeb3037daca265a8d5936a",
+    "README.zh-CN.md": "b7052b95e0c6721d1cbdeccf55c3e90a638a7693d5186e892428bce678e03433",
+    "skills/codex-skill-admin/LICENSE": "f15ec760a2784506dce9074e80df6cd4b1d1adeec715bc926c64dbc41cdd85aa",
+    "skills/codex-skill-admin/SKILL.md": "e4520dba0029a08c67204338de7be94dde20fad11c5cd4d396f57c84441bbec3",
+    "skills/codex-skill-admin/agents/openai.yaml": "a637f41b239fdf701e92b969b3204edf45921e1aadc5f1ae6940ebf678432a1d",
+    "skills/codex-skill-admin/references/app-server-protocol.md": "67e64c3f215191346c154f39183149185f05b48d2d643cf72f4aff54b2ec7fcb",
+    "skills/codex-skill-admin/scripts/codex_skill_admin.py": "402d74f7f616a1b6b5d2e2b5bd7a2b6a06f674d1079cdc6bbbe4f52aea28f8a5"
+  },
+  "generated": true,
+  "payload_digest": "c3e25ed3a729e396c5f641887e8be64bc46603144334d0dd431a1cf7d22a2669",
+  "schema_version": "1.0.0",
+  "skill": "codex-skill-admin",
+  "source_commit": "33bbb003cb967ae75f9ef372438d2e6744ca278f",
+  "version": "1.0.0"
+}
