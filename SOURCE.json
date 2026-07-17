@@ -18,6 +18,6 @@
   "payload_digest": "c3e25ed3a729e396c5f641887e8be64bc46603144334d0dd431a1cf7d22a2669",
   "schema_version": "1.0.0",
   "skill": "codex-skill-admin",
-  "source_commit": "26cba9e100b37a2efe0fa161bd394db46cee5328",
+  "source_commit": "e69c5daca7563c75fe5a44a6bf3445163f03b116",
   "version": "1.0.0"
 }
